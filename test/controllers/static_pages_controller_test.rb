@@ -6,7 +6,7 @@ class StaticPagesControllerTest < ActionDispatch::IntegrationTest
     @base_title = "Ruby on Rails Tutorial Sample App"
   end
 
-
+  # ルートの検証コードです。
   test "should get home" do
     get root_path
     assert_response :success
