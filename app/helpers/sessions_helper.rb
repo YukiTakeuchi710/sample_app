@@ -30,6 +30,11 @@ module SessionsHelper
     end
   end
 
+  # bool判定でユーザが現在ログインしているユーザかどうか確認する。
+  def current_user?(user)
+    user && user == current_user
+  end
+
   # ユーザーがログインしていればtrue、その他ならfalseを返す
   def logged_in?
     !current_user.nil?
@@ -47,5 +52,11 @@ module SessionsHelper
     forget(current_user)
     reset_session
     @current_user = nil   # 安全のため
+  end
+
+  # アクセスしようとしたURLを保存する
+  def store_location
+    # セッション
+    session[:forwarding_url] = request.original_url if request.get?
   end
 end
