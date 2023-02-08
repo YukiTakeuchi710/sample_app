@@ -14,18 +14,8 @@
 #  index_relationships_on_follower_id                  (follower_id)
 #  index_relationships_on_follower_id_and_followed_id  (follower_id,followed_id) UNIQUE
 #
-one:
-  follower: michael
-  followed: lana
+require 'rails_helper'
 
-two:
-  follower: michael
-  followed: malory
-
-three:
-  follower: lana
-  followed: michael
-
-four:
-  follower: archer
-  followed: michael
+RSpec.describe Relationship, type: :model do
+  #pending "add some examples to (or delete) #{__FILE__}"
+end

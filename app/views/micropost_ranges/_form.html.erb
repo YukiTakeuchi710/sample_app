@@ -1,0 +1,27 @@
+<%= form_with(model: micropost_range) do |form| %>
+  <% if micropost_range.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(micropost_range.errors.count, "error") %> prohibited this micropost_range from being saved:</h2>
+
+      <ul>
+        <% micropost_range.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :range_id, style: "display: block" %>
+    <%= form.number_field :range_id %>
+  </div>
+
+  <div>
+    <%= form.label :range_content, style: "display: block" %>
+    <%= form.text_field :range_content %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

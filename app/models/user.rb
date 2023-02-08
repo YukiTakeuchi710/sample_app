@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: users
+#
+#  id                :integer          not null, primary key
+#  activated         :boolean          default(FALSE)
+#  activated_at      :datetime
+#  activation_digest :string
+#  admin             :boolean
+#  email             :string
+#  name              :string
+#  password_digest   :string
+#  remember_digest   :string
+#  reset_digest      :string
+#  reset_sent_at     :datetime
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#
+# Indexes
+#
+#  index_users_on_email  (email) UNIQUE
+#
 class User < ApplicationRecord
   has_many :microposts, dependent: :destroy
   has_many :active_relationships, class_name:  "Relationship",
@@ -89,10 +111,25 @@ class User < ApplicationRecord
 
   # ユーザーのステータスフィードを返す
   def feed
+
+    condition = "micropost.range == 0
+        OR (micropost.range == 1 AND followed_relation.id IS NOT NULL )
+        OR (micropost.range == 2 AND followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL )
+        OR (micropost.range == 3 AND micropost.user_id == :id )"
+
+    lf_join_1 = "relationship AS followed_relation on
+        :user_id == followed_relation.followed_id
+        AND micropost.user_id == followed_relation.follower_id"
+    lf_join_2 = "LEFT outer join relationship AS following_relation on
+        :user_id == follow_relation.follower_id
+        AND micropost.user_id == follow_relation.followed_id"
     part_of_feed = "relationships.follower_id = :id or microposts.user_id = :id"
     Micropost.left_outer_joins(user: :followers)
              .where(part_of_feed, { id: id }).distinct
              .includes(:user, image_attachment: :blob)
+    # Micropost.left_outer_joins(user: :followers).left_outer_joins(user: :following)
+    #          .where(part_of_feed, { id: id }).distinct
+    #          .includes(:user, image_attachment: :blob)
   end
 
   # ユーザーをフォローする

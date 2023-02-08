@@ -1,0 +1,14 @@
+<p style="color: green"><%= notice %></p>
+
+<h1>Micropost ranges</h1>
+
+<div id="micropost_ranges">
+  <% @micropost_ranges.each do |micropost_range| %>
+    <%= render micropost_range %>
+    <p>
+      <%= link_to "Show this micropost range", micropost_range %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New micropost range", new_micropost_range_path %>
