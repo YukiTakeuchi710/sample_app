@@ -20,9 +20,20 @@
 #
 class Micropost < ApplicationRecord
   belongs_to :user, foreign_key: :user_id
+
+
   has_one_attached :image do |attachable|
     attachable.variant :display, resize_to_limit: [500, 500]
   end
+  #has_one :followed_post , class_name: "Relationship", foreign_key: "follower_id", primary_key: "user_id"
+  #has_one :following_post, class_name: "Relationship", foreign_key: "followed_id", primary_key: "user_id"
+
+  has_one :followed_post ,-> {followed_relation}, class_name: "Relationship", foreign_key: "follower_id", primary_key: "user_id"
+  has_one :following_post,-> {following_relation}, class_name: "Relationship", foreign_key: "followed_id", primary_key: "user_id"
+  #has_one :followed_post , class_name: "Relationship", foreign_key: "follower_id", primary_key: "user_id"
+  #has_one :following_post, class_name: "Relationship", foreign_key: "followed_id", primary_key: "user_id"
+  #has_one :followed_relation_post, -> { followed_relation },
+  #has_one :followed_relation_post, through: :following_relation_post
   default_scope -> { order(created_at: :desc) }
   validates :user_id, presence: true
   validates :content, presence: true, length: { maximum: 140 }
@@ -32,23 +43,6 @@ class Micropost < ApplicationRecord
                             message:   "should be less than 5MB" }
   # 検索条件１
   # fullopen:0の場合は
-  scope :search, ->(user_id)  {
-    query = <<-SQL
-      SELECT
-        micropost.*
-      FROM microposts
-      LEFT outer join relationships AS followed_relation on
-        :user_id == followed_relation.followed_id
-        AND microposts.user_id == followed_relation.follower_id
-      LEFT outer join relationships AS following_relation on
-        :user_id == following_relation.follower_id
-        AND microposts.user_id == following_relation.followed_id
-      WHERE 
-        microposts.range == 0
-        OR (microposts.range == 1 AND followed_relation.id IS NOT NULL )
-        OR (microposts.range == 2 AND followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL )
-        OR (microposts.range == 3 AND microposts.user_id == :user_id )
-    SQL
-    find_by_sql([query,{user_id: user_id} ])
-  }
+
 end
+

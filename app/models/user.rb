@@ -26,10 +26,12 @@ class User < ApplicationRecord
                                   foreign_key: "follower_id",
                                   dependent:   :destroy
   has_many :passive_relationships, class_name:  "Relationship",
-           foreign_key: "followed_id",
-           dependent:   :destroy
+                                  foreign_key: "followed_id",
+                                  dependent:   :destroy
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
+  #has_many :following_relation, through: :active_relationships, source: :followed
+  #has_many :followed_relation, through: :passive_relationships, source: :follower
   attr_accessor :remember_token, :activation_token, :reset_token
   before_save   :downcase_email
   before_create :create_activation_digest
@@ -123,10 +125,46 @@ class User < ApplicationRecord
     lf_join_2 = "LEFT outer join relationship AS following_relation on
         :user_id == follow_relation.follower_id
         AND micropost.user_id == follow_relation.followed_id"
+    query = <<-SQL
+      SELECT DISTINCT
+        microposts.*
+      FROM microposts
+      LEFT outer join relationships AS followed_relation on
+        :user_id == followed_relation.followed_id
+        AND microposts.user_id == followed_relation.follower_id
+      LEFT outer join relationships AS following_relation on
+        :user_id == following_relation.follower_id
+        AND microposts.user_id == following_relation.followed_id
+      WHERE 
+        microposts.range == 0
+        OR (microposts.range == 1 AND followed_relation.id IS NOT NULL )
+        OR (microposts.range == 2 AND followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL )
+        OR (microposts.range == 3 AND microposts.user_id == :user_id )
+    SQL
+
+    #Micropost.where()
     part_of_feed = "relationships.follower_id = :id or microposts.user_id = :id"
-    Micropost.left_outer_joins(user: :followers)
-             .where(part_of_feed, { id: id }).distinct
-             .includes(:user, image_attachment: :blob)
+    # p Micropost.left_outer_joins(user: :followers)
+    #          .where(part_of_feed, { id: id }).distinct
+    #          .includes(:user, image_attachment: :blob).class
+    #Relationship.followed_relation(id)
+    #Relationship.following_relation(id)
+    p Micropost.left_outer_joins(:followed_post)
+               .left_outer_joins(:following_post)
+    # Micropost.left_outer_joins(user: :followers)
+    #          .left_outer_joins(user: :following)
+    #          #.where(part_of_feed, { id: id })
+    #          .distinct
+    #          .includes(:user, image_attachment: :blob)
+
+    Micropost.left_outer_joins(:followed_post)
+               .left_outer_joins(:following_post)
+               .distinct
+               .includes(:user, image_attachment: :blob)
+
+    #Micropost..class
+    #Micropost.find_by_sql([query,{user_id: id} ]).class
+    #.includes(:user, image_attachment: :blob)
     # Micropost.left_outer_joins(user: :followers).left_outer_joins(user: :following)
     #          .where(part_of_feed, { id: id }).distinct
     #          .includes(:user, image_attachment: :blob)

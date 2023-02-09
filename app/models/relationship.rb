@@ -17,6 +17,23 @@
 class Relationship < ApplicationRecord
   belongs_to :follower, class_name: "User"
   belongs_to :followed, class_name: "User"
+
+  has_many :post_by_followed, class_name: "Microposts" , foreign_key: "user_id", primary_key: "followed_id"
+  has_many :post_by_following, class_name: "Microposts", foreign_key: "user_id", primary_key: "follower_id"
+
   validates :follower_id, presence: true
   validates :followed_id, presence: true
+  scope :followed_relation, ->  {
+    where(followed_id: 1)
+  }
+  scope :following_relation, ->  {
+    where(follower_id: 1)
+  }
+
+  #scope :followed_relation, -> (user_id) {
+  #  where(followed_id: user_id)
+  #}
+  #scope :following_relation, -> (user_id) {
+  #  where(follower_id: user_id)
+  #}
 end
