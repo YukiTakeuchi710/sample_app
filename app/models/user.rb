@@ -22,21 +22,27 @@
 #
 class User < ApplicationRecord
   has_many :microposts, dependent: :destroy
+  # ほかのユーザーをフォローする。
   has_many :active_relationships, class_name:  "Relationship",
                                   foreign_key: "follower_id",
                                   dependent:   :destroy
+  # ほかのユーザーにフォローされる。
   has_many :passive_relationships, class_name:  "Relationship",
                                   foreign_key: "followed_id",
                                   dependent:   :destroy
+  # ほかのユーザーをミュートする。
   has_many :mute_relationships, class_name:  "Mute",
                                 foreign_key: "muter_id",
                                 dependent:   :destroy
+  # ほかのユーザーにミュートされる。
   has_many :muted_relationships, class_name:  "Mute",
                                  foreign_key: "muted_id",
                                  dependent:   :destroy
+  # フォロー
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
 
+  # ミュート
   has_many :muting, through: :mute_relationships, source: :muted
   has_many :muters, through: :muted_relationships, source: :muter
 
@@ -121,6 +127,8 @@ class User < ApplicationRecord
 
   # ユーザーのステータスフィードを返す
   def feed
+
+    # 目標とするクエリ
     query = <<-SQL
       SELECT
         microposts.*
@@ -154,16 +162,21 @@ class User < ApplicationRecord
                        OR (microposts.range = 2 AND followed_relations.id IS NOT NULL AND following_relations.id IS NOT NULL )
                        OR (microposts.range = 3 AND microposts.user_id = :user_id )"
 
+    # もう少しメソッドを使ったほうがいい。というのは分かっている
     # Micropost.left_joins([followed_relation_join_query, {user_id: id}])
     #           .left_joins([following_relation_join_query, {user_id: id}])
     #          .where([where_condition, {user_id: id}])
     #          .distinct
     #          .includes(:user, image_attachment: :blob)
+
+    # これは何とかしたくはある。。。。
+    # 普通にキャストするメソッドあってもいいのにな
     micropostFeeds = Micropost.find_by_sql([query,{user_id: id} ])
     Micropost.where(id: micropostFeeds.map(&:id))
   end
 
   def personal_feed(viewer_id)
+
     query = <<-SQL
       SELECT
         microposts.*
@@ -187,6 +200,33 @@ class User < ApplicationRecord
           OR (microposts.range = 3 AND microposts.user_id = :viewer_id )
         )
     SQL
+    followed_join = "
+      relationships  followed_relation on
+        followed_relation.follower_id = :viewer_id
+        AND microposts.user_id = followed_relation.followed_id"
+    following_join = "
+      relationships  following_relation on
+        following_relation.followed_id = :viewer_id
+        AND microposts.user_id = following_relation.follower_id"
+
+    where_cond = "
+      microposts.user_id = :user_id
+        AND (
+          microposts.range = 0
+          OR (microposts.range = 1
+            AND (
+                (followed_relation.id IS NOT NULL)
+                OR (microposts.user_id = :viewer_id))
+            )
+          OR (microposts.range = 2 AND ((followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL) OR (microposts.user_id = :viewer_id)) )
+          OR (microposts.range = 3 AND microposts.user_id = :viewer_id )
+        )"
+    # Micropost.left_joins([followed_join, { viewer_id: viewer_id}])
+    #            .left_joins([following_join, { viewer_id: viewer_id}])
+    #            .where([where_cond, {user_id: id, viewer_id: viewer_id}])
+
+    # これは何とかしたくはある。。。。
+    # 普通にキャストするメソッドあってもいいのに
     personalFeeds = Micropost.find_by_sql([query,{user_id: id, viewer_id: viewer_id} ])
     Micropost.where(id: personalFeeds.map(&:id))
 

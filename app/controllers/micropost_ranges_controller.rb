@@ -21,6 +21,7 @@ class MicropostRangesController < ApplicationController
 
   # POST /micropost_ranges or /micropost_ranges.json
   def create
+    # 投稿の公開範囲
     @micropost_range = MicropostRange.new(micropost_range_params)
 
     respond_to do |format|
