@@ -23,17 +23,4 @@ class Relationship < ApplicationRecord
 
   validates :follower_id, presence: true
   validates :followed_id, presence: true
-  scope :followed_relation, ->  {
-    where(followed_id: 1)
-  }
-  scope :following_relation, ->  {
-    where(follower_id: 1)
-  }
-
-  #scope :followed_relation, -> (user_id) {
-  #  where(followed_id: user_id)
-  #}
-  #scope :following_relation, -> (user_id) {
-  #  where(follower_id: user_id)
-  #}
 end

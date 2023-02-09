@@ -13,5 +13,8 @@
       <%= link_to "delete", micropost, data: { "turbo-method": :delete,
                                                turbo_confirm: "You sure?" } %>
     <% end %>
+    <% if !current_user?(micropost.user) %>
+
+    <% end %>
   </span>
 </li>

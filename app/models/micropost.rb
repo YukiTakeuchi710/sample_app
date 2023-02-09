@@ -25,15 +25,8 @@ class Micropost < ApplicationRecord
   has_one_attached :image do |attachable|
     attachable.variant :display, resize_to_limit: [500, 500]
   end
-  #has_one :followed_post , class_name: "Relationship", foreign_key: "follower_id", primary_key: "user_id"
-  #has_one :following_post, class_name: "Relationship", foreign_key: "followed_id", primary_key: "user_id"
-
-  has_one :followed_post ,-> {followed_relation}, class_name: "Relationship", foreign_key: "follower_id", primary_key: "user_id"
-  has_one :following_post,-> {following_relation}, class_name: "Relationship", foreign_key: "followed_id", primary_key: "user_id"
-  #has_one :followed_post , class_name: "Relationship", foreign_key: "follower_id", primary_key: "user_id"
-  #has_one :following_post, class_name: "Relationship", foreign_key: "followed_id", primary_key: "user_id"
-  #has_one :followed_relation_post, -> { followed_relation },
-  #has_one :followed_relation_post, through: :following_relation_post
+  has_one :followed_post , class_name: "Relationship", foreign_key: "follower_id", primary_key: "user_id"
+  has_one :following_post, class_name: "Relationship", foreign_key: "followed_id", primary_key: "user_id"
   default_scope -> { order(created_at: :desc) }
   validates :user_id, presence: true
   validates :content, presence: true, length: { maximum: 140 }
@@ -41,8 +34,6 @@ class Micropost < ApplicationRecord
                                       message: "must be a valid image format" },
             size:         { less_than: 5.megabytes,
                             message:   "should be less than 5MB" }
-  # 検索条件１
-  # fullopen:0の場合は
 
 end
 

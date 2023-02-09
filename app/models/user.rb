@@ -28,10 +28,18 @@ class User < ApplicationRecord
   has_many :passive_relationships, class_name:  "Relationship",
                                   foreign_key: "followed_id",
                                   dependent:   :destroy
+  has_many :mute_relationships, class_name:  "Mute",
+                                foreign_key: "muter_id",
+                                dependent:   :destroy
+  has_many :muted_relationships, class_name:  "Mute",
+                                 foreign_key: "muted_id",
+                                 dependent:   :destroy
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
-  #has_many :following_relation, through: :active_relationships, source: :followed
-  #has_many :followed_relation, through: :passive_relationships, source: :follower
+
+  has_many :muting, through: :mute_relationships, source: :muted
+  has_many :muters, through: :muted_relationships, source: :muter
+
   attr_accessor :remember_token, :activation_token, :reset_token
   before_save   :downcase_email
   before_create :create_activation_digest
@@ -113,61 +121,75 @@ class User < ApplicationRecord
 
   # ユーザーのステータスフィードを返す
   def feed
-
-    condition = "micropost.range == 0
-        OR (micropost.range == 1 AND followed_relation.id IS NOT NULL )
-        OR (micropost.range == 2 AND followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL )
-        OR (micropost.range == 3 AND micropost.user_id == :id )"
-
-    lf_join_1 = "relationship AS followed_relation on
-        :user_id == followed_relation.followed_id
-        AND micropost.user_id == followed_relation.follower_id"
-    lf_join_2 = "LEFT outer join relationship AS following_relation on
-        :user_id == follow_relation.follower_id
-        AND micropost.user_id == follow_relation.followed_id"
     query = <<-SQL
-      SELECT DISTINCT
+      SELECT
         microposts.*
       FROM microposts
-      LEFT outer join relationships AS followed_relation on
-        :user_id == followed_relation.followed_id
-        AND microposts.user_id == followed_relation.follower_id
-      LEFT outer join relationships AS following_relation on
-        :user_id == following_relation.follower_id
-        AND microposts.user_id == following_relation.followed_id
+      LEFT outer join relationships  followed_relation on
+        followed_relation.follower_id = :user_id  
+        AND microposts.user_id = followed_relation.followed_id
+      LEFT outer join relationships  following_relation on
+        following_relation.followed_id = :user_id
+        AND microposts.user_id = following_relation.follower_id
       WHERE 
-        microposts.range == 0
-        OR (microposts.range == 1 AND followed_relation.id IS NOT NULL )
-        OR (microposts.range == 2 AND followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL )
-        OR (microposts.range == 3 AND microposts.user_id == :user_id )
+        microposts.range = 0
+        OR (microposts.range = 1
+          AND (
+              (followed_relation.id IS NOT NULL) 
+              OR (microposts.user_id = :user_id))
+            )
+        OR (microposts.range = 2 AND ((followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL) OR (microposts.user_id = :user_id)) )
+        OR (microposts.range = 3 AND microposts.user_id = :user_id )
     SQL
 
-    #Micropost.where()
     part_of_feed = "relationships.follower_id = :id or microposts.user_id = :id"
-    # p Micropost.left_outer_joins(user: :followers)
-    #          .where(part_of_feed, { id: id }).distinct
-    #          .includes(:user, image_attachment: :blob).class
-    #Relationship.followed_relation(id)
-    #Relationship.following_relation(id)
-    p Micropost.left_outer_joins(:followed_post)
-               .left_outer_joins(:following_post)
-    # Micropost.left_outer_joins(user: :followers)
-    #          .left_outer_joins(user: :following)
-    #          #.where(part_of_feed, { id: id })
+    followed_relation_join_query = %|LEFT outer join relationships  followed_relation on
+                                     followed_relation.follower_id = :user_id
+                                     AND microposts.user_id = followed_relation.followed_id|
+    following_relation_join_query = %|LEFT outer join relationships  following_relation on
+                                      following_relation.followed_id = :user_id
+                                      AND microposts.user_id = following_relation.follower_id|
+    where_condition = "microposts.range = 0
+                       OR (microposts.range = 1 AND followed_relations.id IS NOT NULL )
+                       OR (microposts.range = 2 AND followed_relations.id IS NOT NULL AND following_relations.id IS NOT NULL )
+                       OR (microposts.range = 3 AND microposts.user_id = :user_id )"
+
+    # Micropost.left_joins([followed_relation_join_query, {user_id: id}])
+    #           .left_joins([following_relation_join_query, {user_id: id}])
+    #          .where([where_condition, {user_id: id}])
     #          .distinct
     #          .includes(:user, image_attachment: :blob)
+    micropostFeeds = Micropost.find_by_sql([query,{user_id: id} ])
+    Micropost.where(id: micropostFeeds.map(&:id))
+  end
 
-    Micropost.left_outer_joins(:followed_post)
-               .left_outer_joins(:following_post)
-               .distinct
-               .includes(:user, image_attachment: :blob)
+  def personal_feed(viewer_id)
+    query = <<-SQL
+      SELECT
+        microposts.*
+      FROM microposts
+      LEFT outer join relationships  followed_relation on
+        followed_relation.follower_id = :viewer_id  
+        AND microposts.user_id = followed_relation.followed_id
+      LEFT outer join relationships  following_relation on
+        following_relation.followed_id = :viewer_id
+        AND microposts.user_id = following_relation.follower_id
+      WHERE
+        microposts.user_id = :user_id
+        AND (
+          microposts.range = 0
+          OR (microposts.range = 1
+            AND (
+                (followed_relation.id IS NOT NULL) 
+                OR (microposts.user_id = :viewer_id))
+            )
+          OR (microposts.range = 2 AND ((followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL) OR (microposts.user_id = :viewer_id)) )
+          OR (microposts.range = 3 AND microposts.user_id = :viewer_id )
+        )
+    SQL
+    personalFeeds = Micropost.find_by_sql([query,{user_id: id, viewer_id: viewer_id} ])
+    Micropost.where(id: personalFeeds.map(&:id))
 
-    #Micropost..class
-    #Micropost.find_by_sql([query,{user_id: id} ]).class
-    #.includes(:user, image_attachment: :blob)
-    # Micropost.left_outer_joins(user: :followers).left_outer_joins(user: :following)
-    #          .where(part_of_feed, { id: id }).distinct
-    #          .includes(:user, image_attachment: :blob)
   end
 
   # ユーザーをフォローする
@@ -180,9 +202,25 @@ class User < ApplicationRecord
     following.delete(other_user)
   end
 
+  # ユーザーをミュートする
+  def mute(other_user)
+    following << other_user unless self == other_user
+  end
+
+  # ユーザーをミュートする
+  def unmute(other_user)
+    muting.delete(other_user)
+  end
+
   # 現在のユーザーが他のユーザーをフォローしていればtrueを返す
   def following?(other_user)
     following.include?(other_user)
+  end
+
+
+  # 現在のユーザーが他のユーザーをフォローしていればtrueを返す
+  def muting?(other_user)
+    muting?.include?(other_user)
   end
 
   private
