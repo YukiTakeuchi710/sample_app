@@ -14,6 +14,7 @@ class MicropostsController < ApplicationController
     end
   end
 
+
   def destroy
     @micropost.destroy
     flash[:success] = "Micropost deleted"
@@ -23,6 +24,8 @@ class MicropostsController < ApplicationController
       redirect_to request.referrer, status: :see_other
     end
   end
+
+
 
   private
 
@@ -34,4 +37,8 @@ class MicropostsController < ApplicationController
     @micropost = current_user.microposts.find_by(id: params[:id])
     redirect_to root_url, status: :see_other if @micropost.nil?
   end
+
+
+
+
 end

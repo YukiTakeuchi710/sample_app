@@ -34,6 +34,27 @@ class Micropost < ApplicationRecord
                                       message: "must be a valid image format" },
             size:         { less_than: 5.megabytes,
                             message:   "should be less than 5MB" }
+  scope :content_keyword_search, -> (keyword) {
+    where("content ilike %:keyword%", )
+  }
+  scope :base_search_cond, -> (viewer_id) {
+    where("microposts.range = 0
+        OR (microposts.range = 1
+          AND (
+              (followed_relation.id IS NOT NULL)
+                OR (microposts.user_id = :viewer_id))
+            )
+        OR (microposts.range = 2
+            AND (
+              (followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL)
+                OR (microposts.user_id = :viewer_id)
+              )
+        )
+        OR (microposts.range = 3 AND microposts.user_id = :viewer_id)",{viewer_id: viewer_id})
+  }
+
+
+
 
 end
 

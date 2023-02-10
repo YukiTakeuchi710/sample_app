@@ -44,7 +44,7 @@ class User < ApplicationRecord
 
   # ミュート
   has_many :muting, through: :mute_relationships, source: :muted
-  has_many :muters, through: :muted_relationships, source: :muter
+  has_many :mutedusers, through: :muted_relationships, source: :muter
 
   attr_accessor :remember_token, :activation_token, :reset_token
   before_save   :downcase_email
@@ -57,6 +57,73 @@ class User < ApplicationRecord
   has_secure_password
   validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
 
+
+
+
+  @joins_followed_relation_sql_char =
+    "LEFT OUTER JOIN relationships  followed_relation ON
+      microposts.user_id = followed_relation.followed_id
+      followed_relation.follower_id = ?"
+
+
+  @joins_following_relation_sql =
+    "LEFT OUTER JOIN relationships following_relation ON
+      microposts.user_id = followed_relation.follower_id
+      following_relation.followed_id = ?"
+
+  # メモとして、こういうSQLにしたい
+  @ideal_query = <<-SQL
+        SELECT
+          microposts.*
+        FROM microposts
+        LEFT outer join relationships  followed_relation on
+          followed_relation.follower_id = :viewer_id  
+          AND microposts.user_id = followed_relation.followed_id
+        LEFT outer join relationships  following_relation on
+          following_relation.followed_id = :viewer_id
+          AND microposts.user_id = following_relation.follower_id
+        LEFT outer join users ON 
+          microposts.user_id = users.id
+        WHERE
+          users.name like :keyword
+          AND (
+            microposts.range = 0
+            OR (microposts.range = 1
+              AND (
+                (followed_relation.id IS NOT NULL) 
+                OR (microposts.user_id = :viewer_id))
+            )
+            OR (microposts.range = 2 AND ((followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL) OR (microposts.user_id = :viewer_id)) )
+            OR (microposts.range = 3 AND microposts.user_id = :viewer_id )
+          )
+  SQL
+
+  @based_condition = <<~SQL
+
+  SQL
+
+  # 基本的な検索条件
+  def create_joind_record_with_follow_relationship
+    # joined_records
+    # 目標とするクエリ
+    joins_followed_relation_sql = <<~SQL
+    LEFT OUTER JOIN relationships  followed_relation ON
+      microposts.user_id = followed_relation.followed_id
+      AND followed_relation.follower_id = #{id}
+    SQL
+    joins_following_relation_sql = <<~SQL
+      LEFT OUTER JOIN relationships following_relation ON
+      microposts.user_id = followed_relation.follower_id
+      AND following_relation.followed_id = #{id}
+    SQL
+    Micropost.joins(joins_followed_relation_sql)
+             .joins(joins_following_relation_sql)
+  end
+
+  def create_joind_record_with_follow_relationship_and_user
+    # joined_records
+    create_joind_record_with_follow_relation_ship.left_joins(:user)
+  end
 
   # 渡された文字列のハッシュ値を返す
   def User.digest(string)
@@ -125,111 +192,52 @@ class User < ApplicationRecord
     reset_sent_at < 2.hours.ago
   end
 
+
   # ユーザーのステータスフィードを返す
   def feed
-
     # 目標とするクエリ
-    query = <<-SQL
-      SELECT
-        microposts.*
-      FROM microposts
-      LEFT outer join relationships  followed_relation on
-        followed_relation.follower_id = :user_id  
-        AND microposts.user_id = followed_relation.followed_id
-      LEFT outer join relationships  following_relation on
-        following_relation.followed_id = :user_id
-        AND microposts.user_id = following_relation.follower_id
-      WHERE 
-        microposts.range = 0
-        OR (microposts.range = 1
-          AND (
-              (followed_relation.id IS NOT NULL) 
-              OR (microposts.user_id = :user_id))
-            )
-        OR (microposts.range = 2 AND ((followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL) OR (microposts.user_id = :user_id)) )
-        OR (microposts.range = 3 AND microposts.user_id = :user_id )
+    joins_followed_relation_sql = <<~SQL
+    LEFT OUTER JOIN relationships  followed_relation ON
+      microposts.user_id = followed_relation.followed_id
+      AND followed_relation.follower_id = #{id}
     SQL
+    joins_following_relation_sql = <<~SQL
+      LEFT OUTER JOIN relationships following_relation ON
+      microposts.user_id = followed_relation.follower_id
+      AND following_relation.followed_id = #{id}
+    SQL
+    joined_records = Micropost.joins(joins_followed_relation_sql)
+                              .joins(joins_following_relation_sql)
 
-    part_of_feed = "relationships.follower_id = :id or microposts.user_id = :id"
-    followed_relation_join_query = %|LEFT outer join relationships  followed_relation on
-                                     followed_relation.follower_id = :user_id
-                                     AND microposts.user_id = followed_relation.followed_id|
-    following_relation_join_query = %|LEFT outer join relationships  following_relation on
-                                      following_relation.followed_id = :user_id
-                                      AND microposts.user_id = following_relation.follower_id|
-    where_condition = "microposts.range = 0
-                       OR (microposts.range = 1 AND followed_relations.id IS NOT NULL )
-                       OR (microposts.range = 2 AND followed_relations.id IS NOT NULL AND following_relations.id IS NOT NULL )
-                       OR (microposts.range = 3 AND microposts.user_id = :user_id )"
-
-    # もう少しメソッドを使ったほうがいい。というのは分かっている
-    # Micropost.left_joins([followed_relation_join_query, {user_id: id}])
-    #           .left_joins([following_relation_join_query, {user_id: id}])
-    #          .where([where_condition, {user_id: id}])
-    #          .distinct
-    #          .includes(:user, image_attachment: :blob)
-
-    # これは何とかしたくはある。。。。
-    # 普通にキャストするメソッドあってもいいのにな
-    micropostFeeds = Micropost.find_by_sql([query,{user_id: id} ])
-    Micropost.where(id: micropostFeeds.map(&:id))
+    joined_records.where(range: 0)
+              .or(joined_records.where(range: [1, 2, 3], user_id: id))
+              .or(joined_records.where(range: 1).where.not(followed_relation: { id: nil }))
+              .or(joined_records.where(range: 2).where.not(followed_relation: { id: nil }).where.not(following_relation: { id: nil }))
   end
 
   def personal_feed(viewer_id)
+    feed.where({user_id: id})
+  end
 
-    query = <<-SQL
-      SELECT
-        microposts.*
-      FROM microposts
-      LEFT outer join relationships  followed_relation on
-        followed_relation.follower_id = :viewer_id  
-        AND microposts.user_id = followed_relation.followed_id
-      LEFT outer join relationships  following_relation on
-        following_relation.followed_id = :viewer_id
-        AND microposts.user_id = following_relation.follower_id
-      WHERE
-        microposts.user_id = :user_id
-        AND (
-          microposts.range = 0
-          OR (microposts.range = 1
-            AND (
-                (followed_relation.id IS NOT NULL) 
-                OR (microposts.user_id = :viewer_id))
-            )
-          OR (microposts.range = 2 AND ((followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL) OR (microposts.user_id = :viewer_id)) )
-          OR (microposts.range = 3 AND microposts.user_id = :viewer_id )
-        )
-    SQL
-    followed_join = "
-      relationships  followed_relation on
-        followed_relation.follower_id = :viewer_id
-        AND microposts.user_id = followed_relation.followed_id"
-    following_join = "
-      relationships  following_relation on
-        following_relation.followed_id = :viewer_id
-        AND microposts.user_id = following_relation.follower_id"
+  def search_microposts(params)
+    search_type = params[:search_type]
+    keyword =  '%' + params[:search_content] + '%'
+    if keyword.blank?
+      feed
+    else
+      if SearchType::SEARCH_TYPE_MICROPOST == search_type
+          feed.where("content like ?", keyword)
+      else
 
-    where_cond = "
-      microposts.user_id = :user_id
-        AND (
-          microposts.range = 0
-          OR (microposts.range = 1
-            AND (
-                (followed_relation.id IS NOT NULL)
-                OR (microposts.user_id = :viewer_id))
-            )
-          OR (microposts.range = 2 AND ((followed_relation.id IS NOT NULL AND following_relation.id IS NOT NULL) OR (microposts.user_id = :viewer_id)) )
-          OR (microposts.range = 3 AND microposts.user_id = :viewer_id )
-        )"
-    # Micropost.left_joins([followed_join, { viewer_id: viewer_id}])
-    #            .left_joins([following_join, { viewer_id: viewer_id}])
-    #            .where([where_cond, {user_id: id, viewer_id: viewer_id}])
-
-    # これは何とかしたくはある。。。。
-    # 普通にキャストするメソッドあってもいいのに
-    personalFeeds = Micropost.find_by_sql([query,{user_id: id, viewer_id: viewer_id} ])
-    Micropost.where(id: personalFeeds.map(&:id))
-
+        user_joins = <<~SQL
+          LEFT OUTER JOIN users ON
+            microposts.user_id = users.id
+        SQL
+        searched_feeds = Micropost.find_by_sql([query,{viewer_id: id, keyword: keyword} ])
+        Micropost.where(id: searched_feeds.map(&:id))
+        feed.joins(user_joins).where("user.name like ?", keyword)
+      end
+    end
   end
 
   # ユーザーをフォローする
@@ -244,7 +252,7 @@ class User < ApplicationRecord
 
   # ユーザーをミュートする
   def mute(other_user)
-    following << other_user unless self == other_user
+    muting << other_user unless self == other_user
   end
 
   # ユーザーをミュートする
@@ -260,7 +268,7 @@ class User < ApplicationRecord
 
   # 現在のユーザーが他のユーザーをフォローしていればtrueを返す
   def muting?(other_user)
-    muting?.include?(other_user)
+    muting.include?(other_user)
   end
 
   private

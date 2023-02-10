@@ -1,0 +1,2 @@
+module MicropostSearchHelper
+end

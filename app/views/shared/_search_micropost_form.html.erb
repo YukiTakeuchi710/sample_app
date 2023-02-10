@@ -1,0 +1,5 @@
+<%= form_with(url: search_micropost_path, method: :get)  do |f| %>
+  <%= f.select :search_type, options_from_collection_for_select(SearchType.all, :search_type_id, :search_type_content), class: 'form-select form-control-sm' %>
+  <%= f.text_field :search_content, placeholder: "Search word...",  class: 'form-control form-control-sm' %>
+  <%= f.submit "Search", class: "btn btn-primary" %>
+<% end %>

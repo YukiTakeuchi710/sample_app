@@ -1,14 +1,18 @@
 <% provide(:title, 'All users') %>
-<h1>All users</h1>
-
-<%= will_paginate %>
-
+<aside class="col-md-4 sidebar_fixed">
+<%= render 'shared/search_user_form' %>
+</aside>
+<div class="col-md-8"  >
+  <h3>All users</h3>
 <ul class="users">
-  <% @users.each do |user| %>
-    <li>
+  <% if @users.any? %>
+    <ol class="microposts">
       <%= render @users %>
-    </li>
+    </ol>
+    <%= will_paginate @users,
+                      params: { controller: :users, action: :index } %>
   <% end %>
 </ul>
 
-<%= will_paginate %>
+<%#= will_paginate %>
+</div>

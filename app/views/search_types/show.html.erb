@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @search_type %>
+
+<div>
+  <%= link_to "Edit this search type", edit_search_type_path(@search_type) %> |
+  <%= link_to "Back to search types", search_types_path %>
+
+  <%= button_to "Destroy this search type", @search_type, method: :delete %>
+</div>

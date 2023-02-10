@@ -1,0 +1,14 @@
+<p style="color: green"><%= notice %></p>
+
+<h1>Search types</h1>
+
+<div id="search_types">
+  <% @search_types.each do |search_type| %>
+    <%= render search_type %>
+    <p>
+      <%= link_to "Show this search type", search_type %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New search type", new_search_type_path %>

@@ -101,6 +101,11 @@ footer {
     }
   }
 }
+/* sidebar */
+.sidebar_fixed {
+  position: sticky;
+}
+
 @media (max-width: 800px) {
   footer {
     small {

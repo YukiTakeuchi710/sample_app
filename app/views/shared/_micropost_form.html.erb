@@ -2,7 +2,7 @@
   <%= render 'shared/error_messages', object: f.object %>
   <div class="field">
     <%= f.text_area :content, placeholder: "Compose new micropost..." %>
-    <%= f.select :range,  options_from_collection_for_select(MicropostRange.all, :range_id, :range_content), class: 'form-control'  %>
+    <%= f.select :range,  options_from_collection_for_select(MicropostRange.all, :range_id, :range_content), class: 'form-select'  %>
   </div>
 
   <%= f.submit "Post", class: "btn btn-primary" %>
