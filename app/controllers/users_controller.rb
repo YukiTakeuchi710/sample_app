@@ -7,10 +7,8 @@ class UsersController < ApplicationController
   before_action :admin_user,     only: :destroy
 
   # 本人のユーザ
-
   def new
     @user = User.new
-
   end
 
   # ユーザー一覧
@@ -20,8 +18,7 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find(params[:id])
-    @personal_feed_items = @user.personal_feed(current_user.id).paginate(page: params[:page])
-    #@microposts = @personal_feed_items.paginate(page: params[:page])
+    @personal_feed_items = @user.personal_feed.paginate(page: params[:page])
     redirect_to root_url and return unless @user.activated?
   end
 

@@ -58,19 +58,6 @@ class User < ApplicationRecord
   validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
 
 
-
-
-  @joins_followed_relation_sql_char =
-    "LEFT OUTER JOIN relationships  followed_relation ON
-      microposts.user_id = followed_relation.followed_id
-      followed_relation.follower_id = ?"
-
-
-  @joins_following_relation_sql =
-    "LEFT OUTER JOIN relationships following_relation ON
-      microposts.user_id = followed_relation.follower_id
-      following_relation.followed_id = ?"
-
   # メモとして、こういうSQLにしたい
   @ideal_query = <<-SQL
         SELECT
@@ -98,12 +85,9 @@ class User < ApplicationRecord
           )
   SQL
 
-  @based_condition = <<~SQL
-
-  SQL
-
   # 基本的な検索条件
-  def create_joind_record_with_follow_relationship
+  # 公開範囲、
+  def joins_relationship
     # joined_records
     # 目標とするクエリ
     joins_followed_relation_sql = <<~SQL
@@ -120,9 +104,23 @@ class User < ApplicationRecord
              .joins(joins_following_relation_sql)
   end
 
-  def create_joind_record_with_follow_relationship_and_user
+  # Relationshipとユーザを結合したもの
+  def joins_follow_relationship_and_user
+    user_joins = <<~SQL
+       LEFT OUTER JOIN users ON
+         microposts.user_id = users.id
+    SQL
     # joined_records
-    create_joind_record_with_follow_relation_ship.left_joins(:user)
+    joins_relationship.joins(user_joins)
+  end
+  # 基本検索機能（feedの表示）
+  # 公開範囲は
+  def basic_search(joins_ar)
+    # 検索のベース,公開範囲
+    joins_ar.where(range: 0)
+            .or(joins_ar.where(range: [1, 2, 3], user_id: id))
+            .or(joins_ar.where(range: 1).where.not(followed_relation: { id: nil }))
+            .or(joins_ar.where(range: 2).where.not(followed_relation: { id: nil }).where.not(following_relation: { id: nil }))
   end
 
   # 渡された文字列のハッシュ値を返す
@@ -195,47 +193,33 @@ class User < ApplicationRecord
 
   # ユーザーのステータスフィードを返す
   def feed
-    # 目標とするクエリ
-    joins_followed_relation_sql = <<~SQL
-    LEFT OUTER JOIN relationships  followed_relation ON
-      microposts.user_id = followed_relation.followed_id
-      AND followed_relation.follower_id = #{id}
-    SQL
-    joins_following_relation_sql = <<~SQL
-      LEFT OUTER JOIN relationships following_relation ON
-      microposts.user_id = followed_relation.follower_id
-      AND following_relation.followed_id = #{id}
-    SQL
-    joined_records = Micropost.joins(joins_followed_relation_sql)
-                              .joins(joins_following_relation_sql)
-
-    joined_records.where(range: 0)
-              .or(joined_records.where(range: [1, 2, 3], user_id: id))
-              .or(joined_records.where(range: 1).where.not(followed_relation: { id: nil }))
-              .or(joined_records.where(range: 2).where.not(followed_relation: { id: nil }).where.not(following_relation: { id: nil }))
+    basic_search(joins_relationship)
   end
 
-  def personal_feed(viewer_id)
+  # その人個人の投稿のみを表示するので投稿のユーザIDを参照する。
+  def personal_feed
+    # ユーザIDで投稿ID検索
     feed.where({user_id: id})
   end
 
+  # Home画面で検索する機能
+  # 検索内容：1:(投稿内容)の場合 投稿内容をlike検索する。
+  # 検索内容：2:(ユーザー)の場合 投稿ユーザー名をlike検索する。
   def search_microposts(params)
+    # selectフォーム
     search_type = params[:search_type]
     keyword =  '%' + params[:search_content] + '%'
+    # キーワードの有無を判定
     if keyword.blank?
+      # キーワードがなければHomeと同じ表示
       feed
     else
       if SearchType::SEARCH_TYPE_MICROPOST == search_type
-          feed.where("content like ?", keyword)
+        # Micropost の投稿内容を検索する。
+        feed.where("content like ?", keyword)
       else
-
-        user_joins = <<~SQL
-          LEFT OUTER JOIN users ON
-            microposts.user_id = users.id
-        SQL
-        searched_feeds = Micropost.find_by_sql([query,{viewer_id: id, keyword: keyword} ])
-        Micropost.where(id: searched_feeds.map(&:id))
-        feed.joins(user_joins).where("user.name like ?", keyword)
+        # ユーザまで結合して結合してユーザを検索する。
+        basic_search(joins_follow_relationship_and_user).where("users.name like ?", keyword)
       end
     end
   end
