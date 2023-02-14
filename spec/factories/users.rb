@@ -29,4 +29,15 @@ FactoryBot.define do
     activated {true}
     activated_at {Time.zone.now}
   end
+
+  factory :other_user do
+    name { 'Michael Example1' }
+    sequence(:email) { |n| "tester#{n}@example.com" }
+    password { 'password' }
+    admin {true}
+    activated {true}
+    activated_at {Time.zone.now}
+  end
+
+
 end

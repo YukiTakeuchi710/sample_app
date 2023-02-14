@@ -9,8 +9,13 @@
 #  search_type_id      :integer
 #
 FactoryBot.define do
-  factory :search_type do
+  factory :search_type_text do
+    search_type_id { 1 }
+    search_type_content { "MyString" }
+  end
+  factory :search_type_user do
     search_type_id { 1 }
     search_type_content { "MyString" }
   end
 end
+

@@ -10,7 +10,6 @@ RSpec.describe "Microposts", type: :system do
   scenario "user creates a new Micropost" do
 
     user = FactoryBot.create(:user)
-
     go_to_micropost(user)
     # 入力
     expect {

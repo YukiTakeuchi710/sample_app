@@ -27,6 +27,5 @@ FactoryBot.define do
     trait :blank do
       content {nil}
     end
-
   end
 end

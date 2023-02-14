@@ -1,0 +1,6 @@
+<%= turbo_stream.update "like_form" do %>
+  <%= render partial: "microposts/like" %>
+<% end %>
+<%= turbo_stream.update "muters" do %>
+  <%= @user.muters.count %>
+<% end %>

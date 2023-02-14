@@ -17,8 +17,9 @@ class UsersController < ApplicationController
   end
 
   def show
+    # ユーザー
     @user = User.find(params[:id])
-    @personal_feed_items = @user.personal_feed.paginate(page: params[:page])
+    @personal_feed_items = @user.personal_feed(current_user.id, params[:id]).paginate(page: params[:page])
     redirect_to root_url and return unless @user.activated?
   end
 
@@ -65,6 +66,13 @@ class UsersController < ApplicationController
     @title = "Followers"
     @user  = User.find(params[:id])
     @users = @user.followers.paginate(page: params[:page])
+    render 'show_follow', status: :unprocessable_entity
+  end
+
+  def muting
+    @title = "Muting"
+    @user  = User.find(params[:id])
+    @users = @user.muting.paginate(page: params[:page])
     render 'show_follow', status: :unprocessable_entity
   end
 

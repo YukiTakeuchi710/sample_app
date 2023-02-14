@@ -294,6 +294,15 @@ input {
     display: block;
     margin-left: 60px;
   }
+  .reaction {
+    color: $gray-light;
+    display: block;
+    margin-left: 60px;
+    image {
+      height: 16px;
+      width: 16px;
+    }
+  }
   .gravatar {
     float: left;
     margin-right: 10px;
@@ -308,9 +317,12 @@ aside {
   }
 }
 
+
+
 span.image {
   margin-top: 10px;
   input {
     border: 0;
   }
 }
+

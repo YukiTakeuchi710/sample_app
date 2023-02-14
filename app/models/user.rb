@@ -38,13 +38,18 @@ class User < ApplicationRecord
   has_many :muted_relationships, class_name:  "Mute",
                                  foreign_key: "muted_id",
                                  dependent:   :destroy
+
+  # 投稿にいいねしたかどうか
+
   # フォロー
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
 
   # ミュート
   has_many :muting, through: :mute_relationships, source: :muted
-  has_many :mutedusers, through: :muted_relationships, source: :muter
+  has_many :muters, through: :muted_relationships, source: :muter
+
+
 
   attr_accessor :remember_token, :activation_token, :reset_token
   before_save   :downcase_email
@@ -56,7 +61,6 @@ class User < ApplicationRecord
             uniqueness: true
   has_secure_password
   validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
-
 
   # メモとして、こういうSQLにしたい
   @ideal_query = <<-SQL
@@ -87,40 +91,90 @@ class User < ApplicationRecord
 
   # 基本的な検索条件
   # 公開範囲、
-  def joins_relationship
-    # joined_records
+  def joins_relationship(viewer_id)
+    # ログインしているユーザのIDをここでのidとしたい
     # 目標とするクエリ
+    # フォローされているユーザという条件の結合
     joins_followed_relation_sql = <<~SQL
     LEFT OUTER JOIN relationships  followed_relation ON
       microposts.user_id = followed_relation.followed_id
-      AND followed_relation.follower_id = #{id}
+      AND followed_relation.follower_id = #{viewer_id}
     SQL
+
+    # フォローしているユーザという条件の結合
     joins_following_relation_sql = <<~SQL
       LEFT OUTER JOIN relationships following_relation ON
       microposts.user_id = followed_relation.follower_id
-      AND following_relation.followed_id = #{id}
+      AND following_relation.followed_id = #{viewer_id}
     SQL
+
+    # ミュートしているユーザという条件での結合
+    joins_mute_relationship = <<~SQL
+      LEFT OUTER JOIN mutes ON
+        mutes.muted_id = microposts.user_id
+        AND mutes.muter_id = #{viewer_id}
+    SQL
+
+    # Micropostを結合
     Micropost.joins(joins_followed_relation_sql)
              .joins(joins_following_relation_sql)
+             .joins(joins_mute_relationship)
   end
 
   # Relationshipとユーザを結合したもの
-  def joins_follow_relationship_and_user
+  def joins_follow_relationship_and_user(viewer_id)
     user_joins = <<~SQL
        LEFT OUTER JOIN users ON
          microposts.user_id = users.id
     SQL
     # joined_records
-    joins_relationship.joins(user_joins)
+    joins_relationship(viewer_id).joins(user_joins)
   end
   # 基本検索機能（feedの表示）
   # 公開範囲は
   def basic_search(joins_ar)
-    # 検索のベース,公開範囲
-    joins_ar.where(range: 0)
-            .or(joins_ar.where(range: [1, 2, 3], user_id: id))
-            .or(joins_ar.where(range: 1).where.not(followed_relation: { id: nil }))
-            .or(joins_ar.where(range: 2).where.not(followed_relation: { id: nil }).where.not(following_relation: { id: nil }))
+    # 検索のベース
+    #   ミュートをしていないこと。
+    #   公開範囲
+    joins_ar.where(mutes: {id: nil})
+            .and(
+              joins_ar.where(range: 0)
+                .or(joins_ar.where(range: [1, 2, 3], user_id: id))
+                .or(joins_ar.where(range: 1).where.not(followed_relation: { id: nil }))
+                .or(joins_ar.where(range: 2).where.not(followed_relation: { id: nil }).where.not(following_relation: { id: nil })))
+  end
+
+  # ユーザーのステータスフィードを返す
+  def feed(viewer_id)
+    basic_search(joins_relationship(viewer_id))
+  end
+
+  # その人個人の投稿のみを表示するので投稿のユーザIDを参照する。
+  def personal_feed(viewer_id, user_id)
+    # ユーザIDで投稿ID検索
+    feed(viewer_id).where(microposts: {user_id: user_id})
+  end
+
+  # Home画面で検索する機能
+  # 検索内容：1:(投稿内容)の場合 投稿内容をlike検索する。
+  # 検索内容：2:(ユーザー)の場合 投稿ユーザー名をlike検索する。
+  def search_microposts(viewer_id, params)
+    # selectフォーム
+    search_type = params[:search_type]
+    keyword =  '%' + params[:search_content] + '%'
+    # キーワードの有無を判定
+    if keyword.blank?
+      # キーワードがなければHomeと同じ表示
+      feed(viewer_id)
+    else
+      if SearchType::SEARCH_TYPE_MICROPOST == search_type
+        # Micropost の投稿内容を検索する。
+        feed(viewer_id).where("content like ?", keyword)
+      else
+        # ユーザまで結合して結合してユーザを検索する。
+        basic_search(joins_follow_relationship_and_user(viewer_id)).where("users.name like ?", keyword)
+      end
+    end
   end
 
   # 渡された文字列のハッシュ値を返す
@@ -190,40 +244,7 @@ class User < ApplicationRecord
     reset_sent_at < 2.hours.ago
   end
 
-
-  # ユーザーのステータスフィードを返す
-  def feed
-    basic_search(joins_relationship)
-  end
-
-  # その人個人の投稿のみを表示するので投稿のユーザIDを参照する。
-  def personal_feed
-    # ユーザIDで投稿ID検索
-    feed.where({user_id: id})
-  end
-
-  # Home画面で検索する機能
-  # 検索内容：1:(投稿内容)の場合 投稿内容をlike検索する。
-  # 検索内容：2:(ユーザー)の場合 投稿ユーザー名をlike検索する。
-  def search_microposts(params)
-    # selectフォーム
-    search_type = params[:search_type]
-    keyword =  '%' + params[:search_content] + '%'
-    # キーワードの有無を判定
-    if keyword.blank?
-      # キーワードがなければHomeと同じ表示
-      feed
-    else
-      if SearchType::SEARCH_TYPE_MICROPOST == search_type
-        # Micropost の投稿内容を検索する。
-        feed.where("content like ?", keyword)
-      else
-        # ユーザまで結合して結合してユーザを検索する。
-        basic_search(joins_follow_relationship_and_user).where("users.name like ?", keyword)
-      end
-    end
-  end
-
+  # Follow関係
   # ユーザーをフォローする
   def follow(other_user)
     following << other_user unless self == other_user
@@ -234,6 +255,12 @@ class User < ApplicationRecord
     following.delete(other_user)
   end
 
+  # 現在のユーザーが他のユーザーをフォローしていればtrueを返す
+  def following?(other_user)
+    following.include?(other_user)
+  end
+
+  # ミュート関係
   # ユーザーをミュートする
   def mute(other_user)
     muting << other_user unless self == other_user
@@ -245,14 +272,16 @@ class User < ApplicationRecord
   end
 
   # 現在のユーザーが他のユーザーをフォローしていればtrueを返す
-  def following?(other_user)
-    following.include?(other_user)
-  end
-
-
-  # 現在のユーザーが他のユーザーをフォローしていればtrueを返す
   def muting?(other_user)
     muting.include?(other_user)
+  end
+
+  def liked?(micropost_id)
+    Like.where(micropost_id: micropost_id, user_id: id).exists?
+  end
+
+  def bad?(micropost_id)
+    Bad.where(micropost_id: micropost_id, user_id: id).exists?
   end
 
   private

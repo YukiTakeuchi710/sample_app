@@ -13,6 +13,8 @@
   </aside>
   <div class="col-md-8">
     <%= render 'follow_form' if logged_in? %>
+    <%= render 'mute_form' if logged_in? %>
+
     <% if @personal_feed_items.any? %>
       <h3>Microposts (<%= @personal_feed_items.count %>)</h3>
       <ol class="microposts">
