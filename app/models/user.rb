@@ -276,10 +276,21 @@ class User < ApplicationRecord
     muting.include?(other_user)
   end
 
+  def unlike(micropost_id)
+    Like.destroy(micropost_id: micropost_id, user_id: id)
+  end
+
   def liked?(micropost_id)
     Like.where(micropost_id: micropost_id, user_id: id).exists?
   end
 
+  def bad(micropost_id)
+    Bad.delete(micropost_id: micropost_id, user_id: id)
+  end
+
+  def unbad(micropost_id)
+    Bad.delete(micropost_id: micropost_id, user_id: id)
+  end
   def bad?(micropost_id)
     Bad.where(micropost_id: micropost_id, user_id: id).exists?
   end

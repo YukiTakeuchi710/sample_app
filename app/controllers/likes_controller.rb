@@ -1,9 +1,8 @@
 
 class LikesController < ApplicationController
   def create
-    @user = User.find(params[:user_id])
-    @micropost = Micropost.find(params[:muted_id])
-    current_user.mute(@user)
+    @micropost = Micropost.find(params[:micropost_id])
+    current_user.like(@micropost)
     respond_to do |format|
       format.html { redirect_to @micropost }
       format.turbo_stream
@@ -11,11 +10,10 @@ class LikesController < ApplicationController
   end
 
   def destroy
-    @user = User.find(params[:user_id])
-    @micropost = Micropost.find(params[:muted_id])
-    current_user.unmute(@user)
+    @micropost = Micropost.find(params[:micropost_id])
+    current_user.unlike(@micropost)
     respond_to do |format|
-      format.html { redirect_to @user, status: :see_other }
+      format.html { redirect_to @micropost }
       format.turbo_stream
     end
   end
