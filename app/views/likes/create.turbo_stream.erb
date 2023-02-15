@@ -1,6 +1,3 @@
-<%= turbo_stream.update "like_form-" + @micropost.id do %>
-  <%= render partial: "microposts/unlike" %>
-<% end %>
-<%= turbo_stream.update "like_count-" do %>
-  <%= @micropost.like_reactions.count %>
+<%= turbo_stream.update "likeform-" + @micropost.id.to_s do %>
+  <%= render partial: "likes/like_replace"  %>
 <% end %>

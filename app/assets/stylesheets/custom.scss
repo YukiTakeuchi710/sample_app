@@ -298,6 +298,7 @@ input {
     color: $gray-light;
     display: block;
     margin-left: 60px;
+    display:inline-flex;
     image {
       height: 16px;
       width: 16px;
@@ -324,5 +325,9 @@ span.image {
   input {
     border: 0;
   }
+}
+
+.done-icon-color {
+  color: darkblue;
 }
 

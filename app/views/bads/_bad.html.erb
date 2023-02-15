@@ -1,0 +1,16 @@
+<span id="badform-<%= micropost.id %>">
+  <% if micropost.bad?(current_user) %>
+    <%= form_for(micropost.bads.find_by(user_id: current_user.id), method: :delete, remote: true) do |f| %>
+      <%= button_tag(class: "btn btn-default btn-xs  done-icon-color") do %>
+        <%= image_tag "icon/hand-thumbs-down-fill" %><%= micropost.bads.count %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%= form_for(micropost.bads.build, remote: true) do |f| %>
+      <div><%= hidden_field_tag :micropost_id, micropost.id %></div>
+     <%= button_tag(class: "btn btn-default btn-xs") do %>
+        <%= image_tag "icon/hand-thumbs-down" %><%= micropost.bads.count %>
+      <% end %>
+    <% end %>
+  <% end %>
+</span>

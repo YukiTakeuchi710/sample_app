@@ -1,6 +1,3 @@
 <%= turbo_stream.update "mute_form" do %>
   <%= render partial: "users/unmute" %>
 <% end %>
-<%= turbo_stream.update "muters" do %>
-  <%= @user.muters.count %>
-<% end %>

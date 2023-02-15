@@ -1,6 +1,3 @@
 <%= turbo_stream.update "mute_form" do %>
   <%= render partial: "microposts/like" %>
 <% end %>
-<%= turbo_stream.update "like_count-" do %>
-  <%= @micropost.like_reactions.count %>
-<% end %>
