@@ -67,6 +67,52 @@ RSpec.describe "Microposts", type: :system do
     end
   end
 
+  # 投稿検索のシナリオ
+  #
+  # 投稿内容の検索
+  scenario "search micropost by content" do
+    common_content = "SEARCH_CONTENT"
+    user = FactoryBot.create(:user)
+    go_to_micropost(user)
+    # 3件作成する。
+    (1..3).each do |n|
+      create_micropost(common_content + n.to_s)
+    end
+    expect {
+      search_micropost_by_content(common_content)
+      (1..3).each do |n|
+        expect(page).to have_content (common_content + n.to_s)
+      end
+    }
+  end
+
+  # 投稿内容の検索
+  scenario "search micropost by content" do
+    common_content = "SEARCH_CONTENT"
+    user = FactoryBot.create(:user)
+    other_user = FactoryBot.create(:user)
+
+    go_to_micropost(user)
+    # 3件作成する。
+    (1..3).each do |n|
+      create_micropost(common_content + n.to_s)
+    end
+    click_link 'Account'
+    click_link 'Log out'
+
+    go_to_micropost(other_user)
+    other_user_content = "OTHER_USER_CONTENT"
+    create_micropost(other_user_content)
+
+    expect {
+      search_micropost_by_user_name(user.name)
+      (1..3).each do |n|
+        expect(page).to have_content (common_content + n.to_s)
+      end
+      !expect(page).to have_content other_user_content
+    }
+  end
+
   # 投稿ページに行くメソッド
   # Arg: User
   def go_to_micropost(user)
@@ -81,5 +127,15 @@ RSpec.describe "Microposts", type: :system do
     click_button "Post"
   end
 
+  def search_micropost_by_content(micropost_content)
+    fill_in "search_content", with: micropost_content
+    click_button "Search"
+  end
+
+  def search_micropost_by_user_name(user_name)
+    select 'ユーザー', from: 'Search type'
+    fill_in "search_content", with: user_name
+    click_button "Search"
+  end
 
 end

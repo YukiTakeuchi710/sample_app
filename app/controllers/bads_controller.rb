@@ -17,7 +17,6 @@ class BadsController < ApplicationController
       @micropost.unbad(current_user)
       respond_to do |format|
         format.html{ redirect_to @micropost}
-        # format.html { redirect_to request.referrer || root_url }
         format.turbo_stream
       end
     end
