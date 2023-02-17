@@ -13,6 +13,6 @@
       <% end %>
     <% end %>
   <% end %>
-  <%= link_to micropost.likes.count.to_s, root_url, data: { turbo_frame: "modal" } %>
+  <%= link_to micropost.likes.count.to_s, likes_url, data: { turbo_frame: "modal" } %>
 
 </span>

@@ -1,11 +1,9 @@
-<%= turbo_frame_tag users do %>
+<%= turbo_frame_tag @users do %>
   <%# レイアウトをモーダル用に整える %>
   <%# turbo:submit-end（Turboのsubmit後）イベント発火時に、modal#close（モーダルを閉じる）を実行する %>
   <ul class="users">
-    <% if users.any? %>
       <ol class="microposts">
-        <%= render users %>
+        <%#= render @users %>
       </ol>
-    <% end %>
   </ul>
 <% end %>

@@ -2,12 +2,17 @@
 
 import { application } from "controllers/application"
 
+// import HelloController from "./hello_controller.js"
+// application.register("hello", HelloController)
+//
+import { ModalController } from "./modal_controller.js"
+application.register("modal", ModalController)
+
 // Eager load all controllers defined in the import map under controllers/**/*_controller
 import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
 eagerLoadControllersFrom("controllers", application)
 
-// import ModalController from "controllers/modal_controller.js"
-// application.register("modal", ModalController)
+
 // Lazy load controllers as they appear in the DOM (remember not to preload controllers in import map!)
 // import { lazyLoadControllersFrom } from "@hotwired/stimulus-loading"
 // lazyLoadControllersFrom("controllers", application)

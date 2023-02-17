@@ -12,8 +12,9 @@
     </section>
   </aside>
   <div class="col-md-8">
-    <%= render 'follow_form' if logged_in? %>
-    <%= render 'mute_form' if logged_in? %>
+    # 一度turbo関連の機能を隠す。
+    <%#= render 'follow_form' if logged_in? %>
+    <%#= render 'mute_form' if logged_in? %>
     <% if current_user.muting?(@user) %>
       <h3>You are muting this User</h3>
     <% else %>
