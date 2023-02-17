@@ -1,16 +1,26 @@
-<span id="likeform-<%= @micropost.id %>">
+<span id="likeform-<%= @micropost.id %>" class="reaction-form">
   <% if @micropost.liked?(current_user) %>
     <%= form_for(@micropost.likes.find_by(user_id: current_user.id), method: :delete, remote: true) do |f| %>
       <%= button_tag(class: "btn btn-default btn-xs icon-only") do %>
-        <%= image_tag "icon/hand-thumbs-up-fill" %><%= @micropost.likes.count %>
+        <%= image_tag "icon/hand-thumbs-up-fill" %>
       <% end %>
     <% end %>
   <% else %>
     <%= form_for(@micropost.likes.build, remote: true) do |f| %>
       <div><%= hidden_field_tag :micropost_id, @micropost.id %></div>
       <%= button_tag(class: "btn btn-default btn-xs icon-only") do %>
-        <%= image_tag "icon/hand-thumbs-up" %><%= @micropost.likes.count %>
+        <%= image_tag "icon/hand-thumbs-up" %>
       <% end %>
     <% end %>
+  <% end %>
+  <% if @micropost.likes.any? %>
+    <a data-bs-toggle="modal" data-bs-target="#liked_users">
+      <%= @micropost.likes.count %>
+      <b class="caret" data-bs-toggle="modal" data-bs-target="#liked_users"></b>
+    </a>
+  <% else %>
+    <span>
+      <%= @micropost.likes.count %>
+    </span>
   <% end %>
 </span>
