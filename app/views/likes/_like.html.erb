@@ -1,4 +1,4 @@
-<span id="likeform-<%= micropost.id %>">
+<span id="likeform-<%= micropost.id %>" class="">
   <% if micropost.liked?(current_user) %>
     <%= form_for(micropost.likes.find_by(user_id: current_user.id), method: :delete, remote: true) do |f| %>
       <%= button_tag(class: "btn btn-default btn-xs  icon-only") do %>
@@ -13,4 +13,5 @@
       <% end %>
     <% end %>
   <% end %>
+  <%= link_to micropost.likes.count  %>
 </span>
