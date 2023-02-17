@@ -13,10 +13,6 @@
       <% end %>
     <% end %>
   <% end %>
-  <button link="" >
-    <%= micropost.likes.count %>
-  </button>
   <a onclick="document.getElementById('mask').classList.remove('hidden');
     document.getElementById('users-modal').classList.remove('hidden');"><%= micropost.likes.count %></a>
-  <%= link_to '0', liked_users_modal_path(micropost), remote: true  %>
 </span>
