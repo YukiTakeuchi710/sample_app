@@ -13,13 +13,6 @@
       <% end %>
     <% end %>
   <% end %>
-  <% if @micropost.bads.any? %>
-    <a>
-      <%= @micropost.bads.count %>
-    </a>
-  <% else %>
-    <span>
-      <%= @micropost.bads.count %>
-    </span>
-  <% end %>
+  <%= link_to @micropost.bads.count.to_s, root_url, data: { turbo_frame: "modal" } %>
+
 </span>

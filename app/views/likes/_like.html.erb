@@ -8,11 +8,11 @@
   <% else %>
     <%= form_for(micropost.likes.build, remote: true) do |f| %>
       <div><%= hidden_field_tag :micropost_id, micropost.id %></div>
-     <%= button_tag(class: "btn btn-default btn-xs icon-only") do %>
+      <%= button_tag(class: "btn btn-default btn-xs icon-only") do %>
         <%= image_tag "icon/hand-thumbs-up" %>
       <% end %>
     <% end %>
   <% end %>
-  <a onclick="document.getElementById('mask').classList.remove('hidden');
-    document.getElementById('users-modal').classList.remove('hidden');"><%= micropost.likes.count %></a>
+  <%= link_to micropost.likes.count.to_s, root_url, data: { turbo_frame: "modal" } %>
+
 </span>

@@ -13,13 +13,6 @@
       <% end %>
     <% end %>
   <% end %>
-  <% if @micropost.likes.any? %>
-    <a data-bs-toggle="modal" data-bs-target="#liked_users">
-      <%= @micropost.likes.count %>
-    </a>
-  <% else %>
-    <span>
-      <%= @micropost.likes.count %>
-    </span>
-  <% end %>
+  <%= link_to @micropost.likes.count.to_s, root_url, data: { turbo_frame: "modal" } %>
+
 </span>
