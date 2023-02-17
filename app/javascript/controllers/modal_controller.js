@@ -4,7 +4,6 @@ export default class extends Controller {
   connect() {
     this.modal = new Modal(this.element)
     this.modal.show()
-
   }
   // アクション定義
   // 保存成功時にモーダルを閉じる
