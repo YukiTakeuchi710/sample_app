@@ -2,7 +2,7 @@
 #
 # Table name: micropost_ranges
 #
-#  id            :integer          not null, primary key
+#  id            :bigint           not null, primary key
 #  range_content :string
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null

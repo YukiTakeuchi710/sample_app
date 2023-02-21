@@ -18,7 +18,14 @@
     </aside>
     <div class="col-md-8" id="micropost_feeds" >
       <h3>Micropost Feed</h3>
-      <%= render 'shared/feed' %>
+      <%= turbo_frame_tag "microposts-list" do %>
+        <% if @microposts.any? %>
+          <ol class="microposts">
+            <%= render @microposts %>
+          </ol>
+          <%= paginate @microposts %>
+        <% end %>
+      <% end %>
     </div>
   </div>
 <% else %>

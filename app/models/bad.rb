@@ -2,7 +2,7 @@
 #
 # Table name: bads
 #
-#  id           :integer          not null, primary key
+#  id           :bigint           not null, primary key
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
 #  micropost_id :integer

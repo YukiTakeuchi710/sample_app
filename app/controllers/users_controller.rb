@@ -13,13 +13,18 @@ class UsersController < ApplicationController
 
   # ユーザー一覧
   def index
-    @users = User.where(activated: true).paginate(page: params[:page])
+    if params[:user_name].nil?
+      @users = User.where(activated: true).paginate(page: params[:page])
+    else
+      @users = User.where(activated: true).where('name like ?', '%' + params[:user_name] +'%').paginate(page: params[:page])
+    end
+    # @users = User.where(activated: true).paginate(page: params[:page])
   end
 
   def show
     # ユーザー
     @user = User.find(params[:id])
-    @personal_feed_items = @user.personal_feed(current_user.id, params[:id]).paginate(page: params[:page])
+    @microposts = @user.personal_feed(current_user.id, params[:id]).paginate(page: params[:page])
     redirect_to root_url and return unless @user.activated?
   end
 

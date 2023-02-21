@@ -1,13 +1,12 @@
 class MicropostSearchController < ApplicationController
 
-  def search
+  def index
     @micropost  = current_user.microposts.build
-    @feed_items = current_user.search_microposts(current_user.id, params).paginate(page: params[:page])
-    # respond_to do |format|
-    #   format.html { redirect_to  @micropost }
-    #   format.turbo_stream
-    # end
-    render 'static_pages/home'
+    @microposts = current_user.search_microposts(current_user.id, params).paginate(page: params[:page])
+    respond_to do |format|
+      # turbo_frame variantで分岐
+      format.html.turbo_stream { redirect_to @microposts }
+    end
   end
   private
     def micropost_search_params

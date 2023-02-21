@@ -9,6 +9,11 @@ class LikesController < ApplicationController
     @micropost = Micropost.find(params[:micropost_id])
     unless @micropost.liked?(current_user)
       @micropost.like(current_user)
+      respond_to do |format|
+        format.html {redirect_to @micropost}
+        format.turbo_stream
+      end
+      # render turbo_stream: turbo_stream.replace('likeform-' + micropost.id.to_s, partial: '_like')
     end
   end
 
@@ -16,6 +21,7 @@ class LikesController < ApplicationController
     @micropost = Like.find(params[:id]).micropost
     if @micropost.liked?(current_user)
       @micropost.unlike(current_user)
+      # render turbo_stream: turbo_stream.replace('likeform-' + micropost.id.to_s, partial: '_like')
     end
   end
 
