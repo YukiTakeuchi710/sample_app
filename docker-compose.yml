@@ -1,12 +1,16 @@
 #docker-composeのバージョン
-version: '3'
 services:
-  db:
-    image: postgres
+  postgres:
+    image: postgres:14
+    container_name: postgres
     ports:
       - '5432:5432' # ホストからゲストへポートフォワード
-    volumes:
+    volumes: # DockerVolume
       - postgresql-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
   web:
     build:
       context: .
@@ -15,7 +19,7 @@ services:
     tty: true
     stdin_open: true
     depends_on:
-      - db # DB側のコンテナが出来上がってからwebを実行する
+      - postgres # DB側のコンテナが出来上がってからwebを実行する
     ports:
       - "3000:3000" # ホストからゲストへポートフォワード
     volumes:
