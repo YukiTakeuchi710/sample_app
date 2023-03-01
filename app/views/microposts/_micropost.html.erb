@@ -15,7 +15,6 @@
       <%= link_to "delete", micropost, data: { "turbo-method": :delete,
                                                turbo_confirm: "You sure?" } %>
     <% end %>
-
   </span>
   <span class="reaction">
     <%= render "likes/like", micropost: micropost %>

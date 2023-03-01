@@ -1,0 +1,29 @@
+#docker-composeのバージョン
+services:
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    ports:
+      - '5432:5432' # ホストからゲストへポートフォワード
+    volumes: # DockerVolume
+      - postgresql-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    tty: true
+    stdin_open: true
+    depends_on:
+      - postgres # DB側のコンテナが出来上がってからwebを実行する
+    ports:
+      - "3000:3000" # ホストからゲストへポートフォワード
+    volumes:
+      - .:/sample_app # ソースコード変更したらDocker側も即反映されるように
+volumes:
+  postgresql-data:
+    driver: local

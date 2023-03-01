@@ -1,18 +1,23 @@
-<span id="likeform-<%= micropost.id %>" class="reaction-form">
+<turbo-frame id="likeform-<%= micropost.id %>" class="reaction-form">
   <% if micropost.liked?(current_user) %>
-    <%= form_for(micropost.likes.find_by(user_id: current_user.id), method: :delete, remote: true) do |f| %>
+    <%= form_for(micropost.likes.find_by(user_id: current_user.id), method: :delete, turbo: true) do |f| %>
       <%= button_tag(class: "btn btn-default btn-xs  icon-only") do %>
         <%= image_tag "icon/hand-thumbs-up-fill" %>
       <% end %>
     <% end %>
-  <% else %>
+    <%#= link_to  like_path(micropost, id: micropost.id), method: :post do %>
+      <%#= image_tag "icon/hand-thumbs-up-fill" %>
+    <%# end %>
+<% else %>
     <%= form_for(micropost.likes.build, remote: true) do |f| %>
       <div><%= hidden_field_tag :micropost_id, micropost.id %></div>
       <%= button_tag(class: "btn btn-default btn-xs icon-only") do %>
         <%= image_tag "icon/hand-thumbs-up" %>
       <% end %>
     <% end %>
+    <%#= link_to  like_path(micropost), method: :delete do %>
+      <%#= image_tag "icon/hand-thumbs-up" %>
+    <%# end %>
   <% end %>
-  <%= link_to micropost.likes.count.to_s, root_url, data: { turbo_frame: "modal" } %>
-
-</span>
+  <%= link_to micropost.likes.count.to_s, likes_url, data: { turbo_frame: "modal" } %>
+</turbo-frame>

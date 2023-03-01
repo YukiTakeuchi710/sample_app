@@ -2,6 +2,7 @@ source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 gem "rails",           "7.0.4"
+
 gem "image_processing",           "1.12.2"
 gem "active_storage_validations", "0.9.8"
 gem "bcrypt",          "3.1.18"
@@ -18,11 +19,18 @@ gem "puma",            "5.6.4"
 gem "bootstrap-sass",  "3.4.1"
 gem "bootsnap",        "1.12.0", require: false
 gem "annotate"
+gem 'dotenv-rails'
 
+# Bundle and transpile JavaScript [https://github.com/rails/jsbundling-rails]
+gem "jsbundling-rails"
+gem "kaminari"
+gem "ransack"
+gem "bootstrap_form"
 group :development, :test do
-  gem "sqlite3", "1.4.2"
+  gem "pg", "1.3.5"
   gem 'rspec-rails'
   gem 'factory_bot_rails'
+
 end
 
 group :development do

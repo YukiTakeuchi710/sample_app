@@ -1,7 +1,8 @@
-<% if @feed_items.any? %>
-  <ol class="microposts">
-    <%= render @feed_items %>
-  </ol>
-  <%= will_paginate @feed_items,
-                    params: { controller: :static_pages, action: :home } %>
-<% end %>
+<turbo_frame id="microposts" do %>
+  <% if @microposts.any? %>
+    <ol class="microposts">
+      <%= render @microposts %>
+    </ol>
+    <%= paginate @microposts %>
+ <% end %>
+</turbo_frame>

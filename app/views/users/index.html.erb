@@ -4,15 +4,16 @@
 </aside>
 <div class="col-md-8"  >
   <h3>All users</h3>
+  <%= turbo_frame_tag "microposts-list" do %>
+
 <ul class="users">
   <% if @users.any? %>
     <ol class="microposts">
       <%= render @users %>
     </ol>
-    <%= will_paginate @users,
-                      params: { controller: :users, action: :index } %>
+    <%= will_paginate @users %>
+<!--                      params: { controller: :users, action: :index } %>-->
   <% end %>
 </ul>
-
-<%#= will_paginate %>
+  <% end %>
 </div>

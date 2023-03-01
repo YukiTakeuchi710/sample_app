@@ -1,6 +1,10 @@
 class MicropostsController < ApplicationController
-  before_action :logged_in_user, only: [:create, :destroy]
+  before_action :logged_in_user, only: [:index, :create, :destroy, :edit]
   before_action :correct_user,   only: :destroy
+
+  def index
+    @microposts = current_user.search_microposts(current_user.id, params).paginate(page: params[:page])
+  end
 
   def create
     @micropost = current_user.microposts.build(micropost_params)
@@ -9,9 +13,12 @@ class MicropostsController < ApplicationController
       flash[:success] = "Micropost created!"
       redirect_to root_url
     else
-      @feed_items = current_user.feed(current_user.id).paginate(page: params[:page])
+      @microposts = current_user.feed(current_user.id).paginate(page: params[:page])
       render 'static_pages/home', status: :unprocessable_entity
     end
+  end
+
+  def edit
   end
 
 
@@ -30,7 +37,7 @@ class MicropostsController < ApplicationController
   private
 
   def micropost_params
-    params.require(:micropost).permit(:content, :range,:image)
+    params.require(:micropost).permit(:content, :range, :image)
   end
 
   def correct_user

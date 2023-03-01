@@ -1,0 +1,45 @@
+@startuml
+left to right direction
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
+
+!includeurl AWSPuml/AWSCommon.puml
+!includeurl AWSPuml/General/Client.puml
+!includeurl AWSPuml/GroupIcons/Cloudalt.puml
+!includeurl AWSPuml/ApplicationIntegration/APIGateway.puml
+!includeurl AWSPuml/Compute/EC2.puml
+!includeurl AWSPuml/Groups/VPC.puml
+!include AWSPuml/Groups/AvailabilityZone.puml
+!include AWSPuml/Groups/PublicSubnet.puml
+!include AWSPuml/Groups/PrivateSubnet.puml
+!includeurl AWSPuml/Database/RDS.puml
+!includeurl AWSPuml/AWSSimplified.puml
+!includeurl AWSPuml/Storage/SimpleStorageService.puml
+
+
+' ② 利用するアイコンを宣言
+Client(clientUser, User, User client device)
+
+Cloudalt(aws, AWS Cloud, AWS Cloud) {
+    APIGateway(apiGateway, "Internet Gateway", "Internet Gateway")
+    VPCGroup(vpc) {
+            AvailabilityZoneGroup(az, ap-northeast-1a) {
+                EC2(EC2, "EC2", "EC2")
+                SimpleStorageService(S3, "S3", "S3")
+                RDS(RDS, "RDS", "RDS")
+            }
+        }
+    }
+'   VPC(VPC, "VPC", "VPC")
+
+
+' ③ アイコンの関係を記述
+clientUser 0--> apiGateway: HTTP
+' VPC -> EC2
+apiGateway --> EC2
+EC2 <-- RDS:データの送受信
+EC2 0--> RDS
+EC2 <-- S3:画像ファイル\nログの集積
+EC2 0--> S3
+
+
+@enduml

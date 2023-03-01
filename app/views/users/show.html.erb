@@ -12,17 +12,18 @@
     </section>
   </aside>
   <div class="col-md-8">
-    <%= render 'follow_form' if logged_in? %>
-    <%= render 'mute_form' if logged_in? %>
+    # 一度turbo関連の機能を隠す。
+    <%#= render 'follow_form' if logged_in? %>
+    <%#= render 'mute_form' if logged_in? %>
     <% if current_user.muting?(@user) %>
       <h3>You are muting this User</h3>
     <% else %>
-      <% if @personal_feed_items.any? %>
-        <h3>Microposts (<%= @personal_feed_items.count %>)</h3>
+      <% if @microposts.any? %>
+        <h3>Microposts (<%= @microposts.count %>)</h3>
         <ol class="microposts">
-          <%= render @personal_feed_items %>
+          <%= render @microposts %>
         </ol>
-        <%= will_paginate @personal_feed_items %>
+        <%= will_paginate @microposts %>
       <% end %>
     <% end %>
   </div>
