@@ -10,5 +10,8 @@ ADD Gemfile.lock /sample_app/Gemfile.lock
 
 RUN gem install bundler
 RUN bundle install
+RUN rails db:reset
+RUN rails db:seed
+RUN rails db:migrate
 
 ADD . /sample_app
