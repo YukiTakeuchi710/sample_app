@@ -7,6 +7,8 @@
 # Ignore bundler config.
 /.bundle
 /.env
+/ec2-userdata.sh
+
 # Ignore the default SQLite database.
 /db/*.sqlite3
 /db/*.sqlite3-*

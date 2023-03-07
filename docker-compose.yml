@@ -11,6 +11,10 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  selenium_chrome:
+    image: selenium/standalone-chrome-debug
+    logging:
+      driver: none
   web:
     build:
       context: .
@@ -24,6 +28,7 @@ services:
       - "3000:3000" # ホストからゲストへポートフォワード
     volumes:
       - .:/sample_app # ソースコード変更したらDocker側も即反映されるように
+
 volumes:
   postgresql-data:
     driver: local
